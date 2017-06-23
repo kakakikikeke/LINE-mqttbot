@@ -39,3 +39,44 @@ heroku config:set MQTT_HOST=your.mqtt.broker MQTT_PORT=1883 MQTT_TOPIC=topic MQT
 
 ### 会話してみる
 ![bot-sample-demo](https://lh3.googleusercontent.com/-eALbZHnc5R0/V4e1yf_4ApI/AAAAAAAAJCQ/XN8MBOz7GqsE4BKtBrm6O9qorPlikc01QCKgB/s0/bot_sample.png)
+
+### メッセージを変更してみる
+* git branch change_message
+* git checkout change_message
+* vim config/answer.json
+
+```
+{
+  "pub_success": [
+    {
+      "message": "オン",
+      "payload": "start",
+      "responses": [
+        "開始しました"
+      ]
+    },
+    {
+      "message": "オフ",
+      "payload": "stop",
+      "responses": [
+        "停止しました"
+      ]
+    }
+  ],
+  "sub_success": [
+    {
+      "message": "現状確認",
+      "responses": [
+        "現在の状態は {value} です"
+      ]
+    }
+  ],
+  "fail": [
+    "メッセージが違います"
+  ]
+}
+```
+
+* git add config/answer.json
+* git commit -m "Change messages"
+* git push heroku change_message:master (git push -f heroku change_message:master)
