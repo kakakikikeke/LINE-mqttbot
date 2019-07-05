@@ -1,11 +1,7 @@
 # coding: utf-8
 require 'sinatra'
 require 'line/bot'
-require 'mqtt'
-require 'eventmachine'
-
-file = File.read('config/answer.json')
-settings = JSON.parse(file)
+require './lib/mqtt_client.rb'
 
 class HTTPProxyClient
   def http(uri)
@@ -29,115 +25,77 @@ class HTTPProxyClient
   end
 end
 
-def client
-  @client ||= Line::Bot::Client.new { |config|
-    # for LINE
-    config.httpclient = HTTPProxyClient.new
-    config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
-    config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
-  }
-end
-
-def sendMessage(payload)
-  host = ENV["MQTT_HOST"]
-  port = ENV["MQTT_PORT"]
-  topic = ENV["MQTT_TOPIC"]
-  qos = ENV["MQTT_QOS"].to_i || 0
-  username = ENV["MQTT_USERNAME"]
-  password = ENV["MQTT_PASSWORD"]
-  MQTT::Client.connect(
-    :host => host,
-    :port => port,
-    :username => username,
-    :password => password) do |c|
-      c.publish(
-        topic,
-        payload,
-        false,
-        qos
-      )
-    end
-end
-
-$latest = ""
-def receiveMessage()
-  host = ENV["MQTT_HOST"]
-  port = ENV["MQTT_PORT"]
-  sub_topic = ENV["MQTT_SUB_TOPIC"] || ENV["MQTT_TOPIC"]
-  username = ENV["MQTT_USERNAME"]
-  password = ENV["MQTT_PASSWORD"]
-  MQTT::Client.connect(
-    :host => host,
-    :port => port,
-    :username => username,
-    :password => password) do |c|
-      c.get(sub_topic) do |topic, message|
-        $latest = message
-      end
-    end
-end
-EM::defer do
-  receiveMessage()
-end
-
-def getLatest()
-  return $latest
-end
-
-get '/' do
-  erb :hello
-end
-
-post '/callback' do
-  body = request.body.read
-  signature = request.env['HTTP_X_LINE_SIGNATURE']
-  unless client.validate_signature(body, signature)
-    error 400 do 'Bad Request' end
+class MyBot < Sinatra::Base
+  configure do
+    file = File.read('config/answer.json')
+    answer = JSON.parse(file)
+    set :answer, answer
+    line_client ||= Line::Bot::Client.new { |config|
+      # for LINE
+      config.httpclient = HTTPProxyClient.new
+      config.channel_secret = ENV["LINE_CHANNEL_SECRET"]
+      config.channel_token = ENV["LINE_CHANNEL_TOKEN"]
+      config.channel_id = ENV["LINE_CHANNEL_ID"]
+    }
+    set :line_client, line_client
+    mqtt_client = MQTTClient.new
+    set :mqtt_client, mqtt_client
   end
 
-  events = client.parse_events_from(body)
-  events.each { |event|
-    case event
-    when Line::Bot::Event::Message
-      case event.type
-      when Line::Bot::Event::MessageType::Text
-        msg = event.message['text']
-        puts msg
-        puts msg.encoding
-        puts settings['pub_success']
-        puts settings['sub_success']
-        # publish
-        settings['pub_success'].each { |successes|
-          if (msg.chomp == successes['message'])
-            sendMessage(successes['payload'])
-            message = {
-              type: 'text',
-              text: successes['responses'].sample
-            }
-            client.reply_message(event['replyToken'], message)
-            return "OK"
-          end
-        }
-        # subscribe
-        settings['sub_success'].each { |successes|
-          if (msg.chomp == successes['message'])
-            value = getLatest()
-            message = {
-              type: 'text',
-              text: successes['responses'].sample.gsub("{value}", value)
-            }
-            client.reply_message(event['replyToken'], message)
-            return "OK"
-          end
-        }
-        # fail
-        message = {
-          type: 'text',
-          text: settings['fail'].sample
-        }
-        client.reply_message(event['replyToken'], message)
-      end
+  get '/' do
+    erb :hello
+  end
+
+  post '/callback' do
+    body = request.body.read
+    puts body
+    puts headers
+    signature = request.env['HTTP_X_LINE_SIGNATURE']
+    unless settings.line_client.validate_signature(body, signature)
+      error 400 do 'Bad Request' end
     end
-  }
-  "OK"
+    events = settings.line_client.parse_events_from(body)
+    events.each { |event|
+      case event
+      when Line::Bot::Event::Message
+        case event.type
+        when Line::Bot::Event::MessageType::Text
+          msg = event.message['text']
+          puts msg
+          puts msg.encoding
+          # publish
+          settings.answer['pub_success'].each { |successes|
+            if (msg.chomp == successes['message'])
+              settings.mqtt_client.sendMessage(successes['payload'])
+              message = {
+                type: 'text',
+                text: successes['responses'].sample
+              }
+              settings.line_client.reply_message(event['replyToken'], message)
+              return "OK"
+            end
+          }
+          # subscribe
+          settings.answer['sub_success'].each { |successes|
+            if (msg.chomp == successes['message'])
+              value = settings.mqtt_client.latest
+              message = {
+                type: 'text',
+                text: successes['responses'].sample.gsub("{value}", value)
+              }
+              puts settings.line_client.reply_message(event['replyToken'], message)
+              return "OK"
+            end
+          }
+          # fail
+          message = {
+            type: 'text',
+            text: settings.answer['fail'].sample
+          }
+          puts settings.line_client.reply_message(event['replyToken'], message)
+        end
+      end
+    }
+    "OK"
+  end
 end

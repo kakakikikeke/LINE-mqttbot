@@ -1,6 +1,3 @@
-require 'bundler'
-Bundler.require
-
-require './app'
-run Sinatra::Application
 $stdout.sync = true
+require './app.rb'
+run MyBot
