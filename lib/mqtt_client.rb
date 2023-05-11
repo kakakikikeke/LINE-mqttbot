@@ -1,34 +1,36 @@
+# frozen_string_literal: true
+
 require 'mqtt'
 require 'eventmachine'
 
+# MQTT クライアントを管理するクラス
 class MQTTClient
   def initialize
-    host = ENV["MQTT_HOST"]
-    port = ENV["MQTT_PORT"]
-    sub_topic = ENV["MQTT_SUB_TOPIC"] || ENV["MQTT_TOPIC"]
-    username = ENV["MQTT_USERNAME"]
-    password = ENV["MQTT_PASSWORD"]
-    @qos = ENV["MQTT_QOS"].to_i || 0
-    @topic = ENV["MQTT_TOPIC"]
-    @sub_topic = ENV["MQTT_SUB_TOPIC"] || ENV["MQTT_TOPIC"]
+    @qos = ENV['MQTT_QOS'].to_i || 0
+    @topic = ENV['MQTT_TOPIC']
+    @sub_topic = ENV['MQTT_SUB_TOPIC'] || ENV['MQTT_TOPIC']
     @client = MQTT::Client.connect(
-      :host => host,
-      :port => port,
-      :username => username,
-      :password => password
+      host: ENV['MQTT_HOST'], port: ENV['MQTT_PORT'],
+      username: ENV['MQTT_USERNAME'], password: ENV['MQTT_PASSWORD']
     )
-    @latest = ""
-    EM::defer do
-      receiveMessage
-    end
+    @latest = ''
+    run_backend_worker
   end
 
-  def sendMessage(payload)
+  def send_message(payload)
     @client.publish(@topic, payload, false, @qos)
   end
 
-  def receiveMessage()
-    @client.get(@sub_topic) do |topic, message|
+  private
+
+  def run_backend_worker
+    EM.defer do
+      receive_message
+    end
+  end
+
+  def receive_message
+    @client.get(@sub_topic) do |_, message|
       @latest = message
     end
   end
