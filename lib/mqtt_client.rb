@@ -21,6 +21,8 @@ class MQTTClient
     @client.publish(@topic, payload, false, @qos)
   end
 
+  attr_accessor :latest
+
   private
 
   def run_backend_worker
@@ -34,6 +36,4 @@ class MQTTClient
       @latest = message
     end
   end
-
-  attr_accessor :latest
 end
