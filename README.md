@@ -5,6 +5,8 @@ LINE Bot と会話して MQTT ブローカを操作することができます
 事前に LINE Bot API 用のアカウントを取得してください  
 https://developers.line.biz/console/
 
+ローカルで動作させる方法は[こちら](https://blog.kakakikikeke.com/2023/05/how-to-test-line-mqttbot-on-localhost.html)です
+
 ### Heroku にアプリをデプロイします
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy?template=https://github.com/kakakikikeke/LINE-mqttbot.git)
 
