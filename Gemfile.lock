@@ -38,7 +38,7 @@ GEM
       pry (~> 0.11)
       yard (~> 0.9.11)
     racc (1.7.3)
-    rack (2.2.8)
+    rack (2.2.8.1)
     rack-protection (3.2.0)
       base64 (>= 0.1.0)
       rack (~> 2.2, >= 2.2.4)
@@ -94,10 +94,10 @@ GEM
       daemons (~> 1.0, >= 1.0.9)
       eventmachine (~> 1.0, >= 1.0.4)
       rack (>= 1, < 3)
-    thor (1.3.0)
+    thor (1.3.1)
     tilt (2.3.0)
     unicode-display_width (2.5.0)
-    yard (0.9.34)
+    yard (0.9.35)
 
 PLATFORMS
   ruby
