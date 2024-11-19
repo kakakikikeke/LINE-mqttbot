@@ -6,6 +6,10 @@ require './lib/line_client'
 
 # Bot となる Web アプリケーション用のクラス
 class MyBot < Sinatra::Base
+  configure :production, :development do
+    set :host_authorization, { permitted_hosts: [] }
+  end
+
   configure do
     # ボットの応答を設定
     file = File.read('config/answer.json')
