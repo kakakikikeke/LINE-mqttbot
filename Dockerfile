@@ -1,4 +1,4 @@
-FROM ruby:3.3.5-alpine3.2
+FROM ruby:3.4.2-alpine3.20
 
 ADD . /home
 WORKDIR /home
