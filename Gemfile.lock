@@ -15,15 +15,12 @@ GEM
     kramdown-parser-gfm (1.1.0)
       kramdown (~> 2.0)
     language_server-protocol (3.17.0.5)
-    line-bot-api (2.0.0)
-      base64 (~> 0.2)
-      multipart-post (~> 2.4)
+    line-bot-api (1.29.1)
     lint_roller (1.1.0)
     logger (1.7.0)
     method_source (1.1.0)
     mini_portile2 (2.8.9)
     mqtt (0.6.0)
-    multipart-post (2.4.1)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
     nio4r (2.7.4)
@@ -119,7 +116,7 @@ PLATFORMS
 
 DEPENDENCIES
   eventmachine
-  line-bot-api
+  line-bot-api (~> 1.29.1)
   mqtt
   pry
   pry-doc

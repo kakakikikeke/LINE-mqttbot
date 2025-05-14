@@ -3,7 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'eventmachine'
-gem 'line-bot-api'
+gem 'line-bot-api', '~> 1.29.1'
 gem 'mqtt'
 gem 'pry'
 gem 'pry-doc'
