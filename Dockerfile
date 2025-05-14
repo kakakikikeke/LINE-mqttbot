@@ -2,6 +2,9 @@ FROM ruby:3.4.3-alpine3.21
 
 ADD . /home
 WORKDIR /home
+
+RUN apk add build-base libffi-dev
+
 RUN gem install bundler
 RUN bundle config path vendor
 RUN bundle install
