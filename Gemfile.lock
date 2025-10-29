@@ -20,7 +20,8 @@ GEM
     logger (1.7.0)
     method_source (1.1.0)
     mini_portile2 (2.8.9)
-    mqtt (0.6.0)
+    mqtt (0.7.0)
+      logger
     mustermann (3.0.4)
       ruby2_keywords (~> 0.0.1)
     nio4r (2.7.4)
