@@ -55,7 +55,7 @@ GEM
     rackup (2.3.1)
       rack (>= 3)
     rainbow (3.1.1)
-    rbs (3.9.5)
+    rbs (3.10.0)
       logger
     regexp_parser (2.11.3)
     reverse_markdown (3.0.1)
