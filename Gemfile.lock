@@ -89,7 +89,7 @@ GEM
       rack-protection (= 4.2.1)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
-    solargraph (0.58.0)
+    solargraph (0.58.1)
       ast (~> 2.4.3)
       backport (~> 1.2)
       benchmark (~> 0.4)
