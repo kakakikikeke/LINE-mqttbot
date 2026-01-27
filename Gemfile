@@ -3,7 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'eventmachine'
-gem 'line-bot-api', '~> 1.29.1'
+gem 'line-bot-api', '~> 1.30.0'
 gem 'mqtt'
 gem 'puma'
 gem 'rackup'
