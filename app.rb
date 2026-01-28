@@ -16,8 +16,7 @@ class MyBot < Sinatra::Base
     answer = JSON.parse(file)
     set :answer, answer
     # LINE クライアントを設定
-    proxy = ENV['ENABLE_PROXY'] || false
-    line_client = LINEClient.new(proxy)
+    line_client = LINEClient.new
     set :line_client, line_client
     # MQTT クライアントを設定
     mqtt_client = MQTTClient.new
@@ -32,18 +31,19 @@ class MyBot < Sinatra::Base
   post '/callback' do
     body = request.body.read
     signature = request.env['HTTP_X_LINE_SIGNATURE']
-    unless settings.line_client.validate_signature(body, signature)
+    begin
+      events = settings.line_client.parse_events_from(body, signature)
+    rescue LINEClient::InvalidSignatureError
       error 400 do
         'Bad Request'
       end
     end
-    events = settings.line_client.parse_events_from(body)
     events.each do |event|
       case event
-      when Line::Bot::Event::Message
-        case event.type
-        when Line::Bot::Event::MessageType::Text
-          msg = event.message['text']
+      when Line::Bot::V2::Webhook::MessageEvent
+        case event.message
+        when Line::Bot::V2::Webhook::TextMessageContent
+          msg = event.message.text
           # publish
           publish(msg, event)
           # subscribe
@@ -63,10 +63,9 @@ class MyBot < Sinatra::Base
       next unless msg.chomp == successes['message']
 
       send_to_mqtt(successes['payload'])
-      message = {
-        type: 'text',
+      message = Line::Bot::V2::MessagingApi::TextMessage.new(
         text: successes['responses'].sample
-      }
+      )
       reply_to_line(message, event)
     end
   end
@@ -76,24 +75,22 @@ class MyBot < Sinatra::Base
       next unless msg.chomp == successes['message']
 
       value = settings.mqtt_client.latest
-      message = {
-        type: 'text',
+      message = Line::Bot::V2::MessagingApi::TextMessage.new(
         text: successes['responses'].sample.gsub('{value}', value)
-      }
+      )
       reply_to_line(message, event)
     end
   end
 
   def failure(event)
-    message = {
-      type: 'text',
+    message = Line::Bot::V2::MessagingApi::TextMessage.new(
       text: settings.answer['fail'].sample
-    }
+    )
     reply_to_line(message, event)
   end
 
   def reply_to_line(message, event)
-    settings.line_client.reply_message(event['replyToken'], message)
+    settings.line_client.reply_message(event.reply_token, [message])
   end
 
   def send_to_mqtt(payload)

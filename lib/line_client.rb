@@ -1,28 +1,34 @@
 # frozen_string_literal: true
 
-require 'line/bot'
+require 'line-bot-api'
 require './lib/http_proxy_client'
 
 # LINE クライアントを管理するクラス
 class LINEClient
-  def initialize(proxy)
-    @client = Line::Bot::Client.new do |config|
-      config.httpclient = HTTPProxyClient.new if proxy
-      config.channel_secret = ENV['LINE_CHANNEL_SECRET']
-      config.channel_token = ENV['LINE_CHANNEL_TOKEN']
-      config.channel_id = ENV['LINE_CHANNEL_ID']
-    end
+  def initialize
+    # V2 MessagingApi クライアント
+    @api_client = Line::Bot::V2::MessagingApi::ApiClient.new(
+      channel_access_token: ENV['LINE_CHANNEL_TOKEN']
+    )
+    # V2 WebhookParser
+    @webhook_parser = Line::Bot::V2::WebhookParser.new(
+      channel_secret: ENV['LINE_CHANNEL_SECRET']
+    )
   end
 
-  def validate_signature(content, channel_signature)
-    @client.validate_signature(content, channel_signature)
+  def parse_events_from(body, signature)
+    @webhook_parser.parse(body: body, signature: signature)
+  rescue Line::Bot::V2::WebhookParser::InvalidSignatureError
+    raise InvalidSignatureError
   end
 
-  def parse_events_from(request_body)
-    @client.parse_events_from(request_body)
+  def reply_message(reply_token, messages)
+    request = Line::Bot::V2::MessagingApi::ReplyMessageRequest.new(
+      reply_token: reply_token,
+      messages: messages
+    )
+    @api_client.reply_message(reply_message_request: request)
   end
 
-  def reply_message(token, message)
-    @client.reply_message(token, message)
-  end
+  class InvalidSignatureError < StandardError; end
 end
