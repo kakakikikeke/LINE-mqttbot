@@ -61,8 +61,9 @@ GEM
     rackup (2.3.1)
       rack (>= 3)
     rainbow (3.1.1)
-    rbs (3.10.2)
+    rbs (3.10.3)
       logger
+      tsort
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -117,6 +118,7 @@ GEM
       yard-solargraph (~> 0.1)
     thor (1.5.0)
     tilt (2.7.0)
+    tsort (0.2.0)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.2.0)
