@@ -10,7 +10,7 @@ GEM
     eventmachine (1.2.7)
     io-console (0.8.2)
     jaro_winkler (1.7.0)
-    json (2.19.2)
+    json (2.19.3)
     kramdown (2.5.2)
       rexml (>= 3.4.4)
     kramdown-parser-gfm (1.1.0)
@@ -36,7 +36,7 @@ GEM
     open3 (0.2.1)
     ostruct (0.6.3)
     parallel (1.27.0)
-    parser (3.3.10.2)
+    parser (3.3.11.1)
       ast (~> 2.4.1)
       racc
     prism (1.9.0)
@@ -61,7 +61,7 @@ GEM
     rackup (2.3.1)
       rack (>= 3)
     rainbow (3.1.1)
-    rbs (3.10.3)
+    rbs (3.10.4)
       logger
       tsort
     regexp_parser (2.11.3)
