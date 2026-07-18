@@ -3,7 +3,7 @@ FROM ruby:4.0.5-alpine3.23
 ADD . /home
 WORKDIR /home
 
-RUN apk add build-base libffi-dev
+RUN apk add build-base libffi-dev yaml-dev
 
 RUN gem install bundler
 RUN bundle config path vendor
