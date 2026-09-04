@@ -11,7 +11,7 @@ RUN bundle config path vendor
 RUN bundle install
 
 RUN addgroup -S mqttbot && adduser -S mqttbot -G mqttbot \
-        && chown -R mqttbot:mqttbot /app
+        && chown -R mqttbot:mqttbot /home
 USER mqttbot
 
 CMD bundle exec rackup config.ru -o 0.0.0.0 -p $PORT
