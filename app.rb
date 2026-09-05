@@ -3,6 +3,8 @@
 require 'sinatra'
 require './lib/mqtt_client'
 require './lib/line_client'
+require './service/bot_service'
+require './repository/answer_repository'
 
 # Bot となる Web アプリケーション用のクラス
 class MyBot < Sinatra::Base
@@ -11,16 +13,19 @@ class MyBot < Sinatra::Base
   end
 
   configure do
-    # ボットの応答を設定
-    file = File.read('config/answer.json')
-    answer = JSON.parse(file)
-    set :answer, answer
-    # LINE クライアントを設定
+    answer_repository = AnswerRepository.new('config/answer.json')
+    set :answer_repository, answer_repository
+
     line_client = LINEClient.new
     set :line_client, line_client
-    # MQTT クライアントを設定
+
     mqtt_client = MQTTClient.new
     set :mqtt_client, mqtt_client
+
+    set :bot_service, BotService.new(
+      answer: answer_repository.load,
+      mqtt_client: mqtt_client
+    )
   end
 
   get '/' do
@@ -34,66 +39,22 @@ class MyBot < Sinatra::Base
     begin
       events = settings.line_client.parse_events_from(body, signature)
     rescue LINEClient::InvalidSignatureError
-      error 400 do
-        'Bad Request'
-      end
+      halt 400, 'Bad Request'
     end
     events.each do |event|
       case event
       when Line::Bot::V2::Webhook::MessageEvent
         case event.message
         when Line::Bot::V2::Webhook::TextMessageContent
-          msg = event.message.text
-          # publish
-          publish(msg, event)
-          # subscribe
-          subscribe(msg, event)
-          # fail
-          failure(event)
+          result = settings.bot_service.call(event.message.text)
+          result.publishes.each { |payload| settings.mqtt_client.send_message(payload) }
+          result.replies.each do |text|
+            message = Line::Bot::V2::MessagingApi::TextMessage.new(text: text)
+            settings.line_client.reply_message(event.reply_token, [message])
+          end
         end
       end
     end
     'OK'
-  end
-
-  private
-
-  def publish(msg, event)
-    settings.answer['pub_success'].each do |successes|
-      next unless msg.chomp == successes['message']
-
-      send_to_mqtt(successes['payload'])
-      message = Line::Bot::V2::MessagingApi::TextMessage.new(
-        text: successes['responses'].sample
-      )
-      reply_to_line(message, event)
-    end
-  end
-
-  def subscribe(msg, event)
-    settings.answer['sub_success'].each do |successes|
-      next unless msg.chomp == successes['message']
-
-      value = settings.mqtt_client.latest
-      message = Line::Bot::V2::MessagingApi::TextMessage.new(
-        text: successes['responses'].sample.gsub('{value}', value)
-      )
-      reply_to_line(message, event)
-    end
-  end
-
-  def failure(event)
-    message = Line::Bot::V2::MessagingApi::TextMessage.new(
-      text: settings.answer['fail'].sample
-    )
-    reply_to_line(message, event)
-  end
-
-  def reply_to_line(message, event)
-    settings.line_client.reply_message(event.reply_token, [message])
-  end
-
-  def send_to_mqtt(payload)
-    settings.mqtt_client.send_message(payload)
   end
 end
