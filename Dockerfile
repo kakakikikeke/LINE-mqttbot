@@ -2,9 +2,9 @@ FROM ruby:4.0.5-alpine3.23
 
 WORKDIR /home
 
-RUN apk add build-base libffi-dev yaml-dev
+RUN apk --no-cache add build-base libffi-dev yaml-dev
 
-ADD . /home
+COPY . /home
 
 RUN gem install bundler
 RUN bundle config path vendor
